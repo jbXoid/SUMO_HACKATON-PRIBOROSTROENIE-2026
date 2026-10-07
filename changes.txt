@@ -1,0 +1,34 @@
+0. MADE MAKEFILE FOR BUILDING
+
+1. FIXING SYNTAX ERRORS AND BUILDING/FLASHING FIRST TIME
+
+1.1. Deleted ' #include "EEPROM" ' (We don't use it)
+
+1.2. Made tabs in main.c to make code more readable
+
+1.3. Excluded DC_motor_driver.c from building (will be included after fix)
+
+FIRST BUILDED
+
+- Fixed Makefile
+
+FIRST FLASHED
+
+2. MAKING DIAGNOSTICS CODE
+
+2.1. Setting up UART Debug transmission
+
+2.1. Copied needed files
+
+2.2.1. Made send_text_usart function
+
+2.2.2 Made test code
+
+2.2. Made diagnostics code
+
+2.2.1. Made SHARP sensors diagnostics
+
+2.2.2. Made motors diagnostics
+
+2.2.3. Made line sensors diagnostics
+
