@@ -31,7 +31,7 @@ static void TrackTarget(void) {
     int16_t correction = 0;
 
 
-    if ((error > TRACK_DEAD_BAND) || (error < TRACK_DEAD_BAND)) {
+    if ((error > TRACK_DEAD_BAND) || (error < -TRACK_DEAD_BAND)) {
 
         correction = error / TRACK_DIVISOR;
 
@@ -100,7 +100,8 @@ cli();
 	if (Get_GTimer(Sensor_Timer)>T_SENSOR)
 	{
 
-        PIN_C  = PIN_C & 3;
+        PIN_C  = PIN_C & 0x03;
+        Stop_GTimer(Sensor_Timer);
 
         if(fsm_Go_state == 6) {
 
@@ -401,7 +402,7 @@ cli();
 	break;
 
 	case 6: //”ход от кра€ ринга
-        if(Get_GTimer(Motion_Timer) < T_REVERS)	//и дальнейшего их пуска
+        if(Get_GTimer(Go_Timer) < T_REVERS)	//и дальнейшего их пуска
             {
                 DC_motors(STOP,0,0);
                 break;
