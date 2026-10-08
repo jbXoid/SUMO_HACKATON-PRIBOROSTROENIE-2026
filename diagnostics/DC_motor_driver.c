@@ -1,6 +1,6 @@
 #include "main.h"
 
-void DC_Motors (Action action, uint8_t speed)
+void DC_Motors (enum Action action, uint8_t speed)
 {
 cli();
     

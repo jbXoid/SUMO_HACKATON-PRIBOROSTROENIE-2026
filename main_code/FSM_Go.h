@@ -106,6 +106,23 @@
 
 #endif //CHINA300
 //-------------------------------------------------------------------------------------------------------------
+//
+
+#define TRACK_DEAD_BAND 4
+#define TRACK_DIVISOR 2
+#define TRACK_CORRECTION_MAX 35
+#define TRACK_MIN_PWM 40
+
+#define CONTACT_HOLD 350
+
+#define EDGE_BLACK_CONFIRM 3
+#define T_EDGE_MIN_BACK 100
+#define T_EDGE_TIMEOUT 900
+#define T_EDGE_CLEAR 100
+#define T_EDGE_TURN 180
+
+
+
 extern uint8_t PIN_C; //переменная в которой остануться биты (PC0,PC1)датчиков LH,RH. Контроль края ринга.
 
 extern void InitFSM_Go (void);

@@ -5,12 +5,93 @@ uint8_t PIN_C; //переменная в которой остануться биты (PC0,PC1)датчиков LH,RH. К
 static uint8_t fsm_Go_state; //переменная автомата ProcessFSM_Go
 static uint8_t num_back; // Счётчик кол-ва входов в режим ухода от края
 
+static uint8_t edge_side;
+static uint8_t edge_black_count;
+
+static uint8_t ClampPwm(int16_t value) {
+
+    if(value < TRACK_MIN_PWM) {
+        return TRACK_MIN_PWM;
+    }
+
+    if(value > SPEED_FAST) {
+        return SPEED_FAST;
+    }
+
+    return (uint8_t)value;
+
+
+}
+
+static void TrackTarget(void) {
+
+    int16_t error =
+        (int16_t)ADCH_L - (int16_t)ADCH_R;
+
+    int16_t correction = 0;
+
+
+    if ((error > TRACK_DEAD_BAND) || (error < TRACK_DEAD_BAND)) {
+
+        correction = error / TRACK_DIVISOR;
+
+        if(correction > TRACK_CORRECTION_MAX) {
+
+            correction = TRACK_CORRECTION_MAX;
+
+        }
+
+        if (correction < -TRACK_CORRECTION_MAX) {
+
+            correction = -TRACK_CORRECTION_MAX;
+
+        }
+
+    }
+
+
+    DC_motors(
+        FORWARD,
+        ClampPwm((int16_t)SPEED_F - correction),
+        ClampPwm((int16_t)SPEED_F + correction)
+    );
+
+}
+
+
+static void EnterEdgeRecovery(uint8_t detected_side) {
+    
+    edge_side = 
+        (detected_side <= 2) ? detected_side : 0;
+
+    edge_black_count = 0;
+
+
+    DC_motors(STOP,0,0);
+    LED_OFF;
+
+    
+    Stop_GTimer(Motion_Timer);
+    Stop_GTimer(RRLL_Timer);
+    Stop_GTimer(Go_Timer);
+    Start_GTimer(Go_Timer);
+    
+    fsm_Go_state = 6;
+
+}
+
 void InitFSM_Go (void)
 {
+
+    edge_side = 0;
+    edge_black_count = 0;
+
 	fsm_Go_state = 0;
 	num_back = 0;
+
 	PIN_C = 3;//Для того, чтобы небыло случайного ухода в состоние "объезд линии" при старте. Ринг чёрный, линия белая.
 }	
+
 
 void ProcessFSM_Go (void)
 {
@@ -18,12 +99,35 @@ cli();
 	Start_GTimer (Sensor_Timer); //выдержка времени Sensor_Timer для защиты от "дребезга" показаний датчиков
 	if (Get_GTimer(Sensor_Timer)>T_SENSOR)
 	{
-		PIN_C=PINC;
-		PIN_C=PIN_C&3; //Обнуляю разряды 2-7. Смотрим датчики линии.
 
-		Stop_GTimer(Sensor_Timer);
+        PIN_C  = PIN_C & 3;
+
+        if(fsm_Go_state == 6) {
+
+            if (PIN_C>2) {
+                if(edge_black_count < EDGE_BLACK_CONFIRM) {
+    
+                    edge_black_count ++;
+                    
+                }
+            }
+            else {
+                edge_black_count = 0;
+            }
+            
+        }
+
 	}
 				
+    if ((PIN_C < 3) && 
+        (fsm_Go_state != 0) &&
+        (fsm_Go_state != 6) &&
+        (fsm_Go_state != 10)) {
+
+        EnterEdgeRecovery(PIN_C);
+
+    }
+
 	switch (fsm_Go_state)
 	{
 	case 0:
@@ -42,15 +146,14 @@ cli();
 		}
 		else if (GetMessage(MSG_Go_Stop))
 		{
-			fsm_Go_state=6;
+			EnterEdgeRecovery(PIN_C);
 		}
 	break;
 
 	case 1: //Выход на цель
 //Продумать алгоритм действий на случай продолжения атаки более 30с
         
-        DC_motors(FORWARD, SPEED_F, SPEED_F);
-
+        TrackTarget();
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 		if ((ADCH_L >= K_FRONT_DIST) || (ADCH_R >= K_FRONT_DIST)) //Цель на КОВШЕ
@@ -59,6 +162,9 @@ cli();
 			if(Get_GTimer(RRLL_Timer) > T_FRONT_CONTACT)
 			{
 				fsm_Go_state = 7;
+
+                Stop_GTimer(Go_Timer);
+                Start_GTimer(Go_Timer);
 				Stop_GTimer(RRLL_Timer);
 			}
 		}
@@ -122,6 +228,8 @@ cli();
 			if(Get_GTimer(RRLL_Timer) > T_FRONT_CONTACT)
 			{
 				fsm_Go_state = 7;
+                Stop_GTimer(Go_Timer);
+                Start_GTimer(Go_Timer);
 				Stop_GTimer(Motion_Timer);
 				Stop_GTimer(RRLL_Timer);
 				LED_ON;
@@ -183,6 +291,8 @@ cli();
 				if(Get_GTimer(RRLL_Timer)>T_FRONT_CONTACT)
 					{
 					fsm_Go_state=7;
+                    Stop_GTimer(Go_Timer);
+                    Start_GTimer(Go_Timer);
 					Stop_GTimer(Motion_Timer);
 					Stop_GTimer(RRLL_Timer);
 					LED_ON;
@@ -291,71 +401,43 @@ cli();
 	break;
 
 	case 6: //Уход от края ринга
-		if(PIN_C==1)	//Линия слева. Уходим назад и вправо.
-			{
-				Start_GTimer (Motion_Timer);			//Делаем задержку для плавной остановки двигателей
-				if(Get_GTimer(Motion_Timer)>T_REVERS)	//и дальнейшего их пуска
-					{
-					PORTB |= 1<<IN1;
-					PORTD |= (0<<IN2|1<<IN3|0<<IN4);
+        if(Get_GTimer(Motion_Timer) < T_REVERS)	//и дальнейшего их пуска
+            {
+                DC_motors(STOP,0,0);
+                break;
+            }
+        if (edge_side == 1) {
+            DC_motors(BACK,SPEED_B,SPEED_B - BACK_R);
+        }
 
-					OCR1A=SPEED_B-BACK_R;
-					OCR1B=SPEED_B;	//регистр ШИМ на левый двигатель
+        else if (edge_side == 2) {
+            DC_motors( BACK, SPEED_B - BACK_L, SPEED_B );
+        }
 
-					Stop_GTimer(Motion_Timer);	
-					}
-			}
-			else if(PIN_C==2) //Линия справа. Уходим назад и влево.
-				{
-					Start_GTimer (Motion_Timer);			//Делаем задержку для плавной остановки двигателей
-					if(Get_GTimer(Motion_Timer)>T_REVERS)	//и дальнейшего их пуска
-						{
-						PORTB |= 1<<IN1;
-						PORTD |= (0<<IN2|1<<IN3|0<<IN4);
+        else {
 
-						OCR1A=SPEED_B;
-						OCR1B=SPEED_B-BACK_L;	//регистр ШИМ на левый двигатель
+            DC_motors(BACK,SPEED_B1,SPEED_B1);
 
-						Stop_GTimer(Motion_Timer);	
-						}	
-				}
-			else if(PIN_C==0) //Линия спереди. Уходим назад.
-				{
-					Start_GTimer (Motion_Timer);			//Делаем задержку для плавной остановки двигателей
-					if(Get_GTimer(Motion_Timer)>T_REVERS)	//и дальнейшего их пуска
-						{
-                        
-                        DC_motors(BACK,SPEED_B1,SPEED_B1);
+        }
 
-						Stop_GTimer(Motion_Timer);	
-						}	
-				}
+        if((edge_black_count >= EDGE_BLACK_CONFIRM) && 
+            (Get_GTimer(Go_Timer) >= T_EDGE_MIN_BACK)) {
 
-		Start_GTimer (Go_Timer);
-		if((Get_GTimer(Go_Timer) > T_B) && (PIN_C > 2))
-			{
-			//Надо будет делать переход в режим ПЕРИМЕТР-----------------------------------------------------------------------------!!!
-			//Пока временно поставлю переход в ТОРНАДО ПРАВЫЙ
-			fsm_Go_state=0;
-			SendMessage(MSG_TORNADO_R);
-			Stop_GTimer(Go_Timer);	
-			Stop_GTimer(Motion_Timer);
-			}
-
-		else if ((Get_GTimer(Go_Timer) > T_B) && (PIN_C < 3)) 
-			{
+            Stop_GTimer(Go_Timer);
+            Start_GTimer(Go_Timer);
+            fsm_Go_state = 8;
             
+        }
+
+        else if (Get_GTimer(Go_Timer) >= T_EDGE_TIMEOUT) {
+
             DC_motors(STOP,0,0);
-
-			fsm_Go_state = 0;
-			Stop_GTimer(Go_Timer);
-			Stop_GTimer(Motion_Timer);
-			menu_state = 1;						//Активация меню
-			start_state = 1;					//Активация FSM Start
-			}
-
-	break;
-
+            Stop_GTimer(Go_Timer);
+            fsm_Go_state = 10;
+            
+        }
+        break;
+        
 	case 7: //Боевой контакт
             DC_motors(FORWARD, SPEED_FAST, SPEED_FAST);
 
@@ -371,18 +453,73 @@ cli();
 			LED_OFF;
 			fsm_Go_state=6;
 			}
-            else if ((ADCH_L<K_ADCH_L) && (ADCH_R<K_ADCH_R)) //Потеря цели по фронту
+            else if ((ADCH_L<K_ADCH_L) && (ADCH_R<K_ADCH_R) && (Get_GTimer(Go_Timer) >= CONTACT_HOLD)) //Потеря цели по фронту
 				{
                 
                     DC_motors(STOP,0,0);
                     
 				LED_OFF;
 				fsm_Go_state=0;
+
+                Stop_GTimer(Go_Timer);
+
 				SendMessage(MSG_TORNADO_R);
 				}
 
 
 	break;
+
+    
+   case 8: /* Дополнительный запас назад после схода с линии */
+        DC_motors(BACK, SPEED_B1, SPEED_B1);
+
+        if (Get_GTimer(Go_Timer) >= T_EDGE_CLEAR) {
+            DC_motors(STOP, 0, 0);
+
+            Stop_GTimer(Go_Timer);
+            Start_GTimer(Go_Timer);
+
+            fsm_Go_state = 9;
+        }
+        break;
+
+    case 9: /* Разворот внутрь ринга */
+        if (edge_side == 2) {
+            DC_motors(
+                TORNADO_LEFT,
+                SPEED_GO_ROTATION,
+                SPEED_GO_ROTATION
+            );
+        }
+        else {
+            DC_motors(
+                TORNADO_RIGHT,
+                SPEED_GO_ROTATION,
+                SPEED_GO_ROTATION
+            );
+        }
+
+        if (Get_GTimer(Go_Timer) >= T_EDGE_TURN) {
+            DC_motors(STOP, 0, 0);
+            Stop_GTimer(Go_Timer);
+
+            fsm_Go_state = 0;
+
+            if (edge_side == 2) {
+                SendMessage(MSG_TORNADO_L);
+            }
+            else {
+                SendMessage(MSG_TORNADO_R);
+            }
+        }
+        break;
+
+    case 10: /* Не удалось уйти с линии */
+        DC_motors(STOP, 0, 0);
+        LED_ON;
+        break; 
+
+
 	}	
 
 sei();

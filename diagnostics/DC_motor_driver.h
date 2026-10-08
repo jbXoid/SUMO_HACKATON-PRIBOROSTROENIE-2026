@@ -10,8 +10,8 @@
 #define TORNADO_RIGHT	7
 */
 
-typedef enum {
+enum Action {
     FORWARD, BACK, LEFT, RIGHT, STOP, TORNADO_LEFT, TORNADO_RIGHT
-} Action;
+};
 
-extern void DC_Motors (Action action, uint8_t Speed);
+extern void DC_Motors (enum Action action, uint8_t Speed);

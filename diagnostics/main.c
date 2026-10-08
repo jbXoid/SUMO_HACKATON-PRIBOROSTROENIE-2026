@@ -14,7 +14,7 @@ int main (void)
     Init_GTimer();
     init_timer1();
 
-    Init_SHARP_ADC();
+    InitFSM_SHARP_ADC();
     sei();
 
     Mode diag_mode = NONE;
@@ -55,12 +55,7 @@ int main (void)
             OCR1A = 0;
             OCR1B = 0;
 
-            break;
-
-
-
             Start_GTimer(10);
-
 
         }
         Prev_Pin_D = Pin_D;
@@ -109,7 +104,7 @@ int main (void)
 
                     if( motor_speed_rising ) {
 
-                        if ( OCR1A == 100 && OCR1B == 100) {
+                        if ( OCR1A == 255 && OCR1B == 255) {
                             
                             motor_speed_rising = 0;
 

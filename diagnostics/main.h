@@ -51,4 +51,7 @@
 // ADDED: stdio lib
 #include <stdio.h>
 
+
+#include "DC_motor_driver.h"
+
 #endif //_TEST_H

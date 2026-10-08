@@ -109,9 +109,7 @@ switch (fsm_TORNADO_state)
 	
 		if(PIN_C<3) //Контроль края ринга
 			{
-			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-
+            DC_motors(STOP,0,0);
 			Stop_GTimer(Motion_Timer);
 			Stop_GTimer(Tornado_Timer);
 			Stop_GTimer(RRLL_Timer);
@@ -215,11 +213,9 @@ switch (fsm_TORNADO_state)
 				SendMessage(MSG_Go_R);
 				}
 	
-		if((PIN_C<3)&&(fsm_TORNADO_state|=0)) //Контроль края ринга
+		if(PIN_C<3) //Контроль края ринга
 			{
-			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-
+            DC_motors(STOP,0,0);
 			Stop_GTimer(Motion_Timer);
 			Stop_GTimer(Tornado_Timer);
 			Stop_GTimer(RRLL_Timer);
@@ -247,6 +243,7 @@ switch (fsm_TORNADO_state)
 	break;
 
 	case 3: //Начало манёвра ухода от атаки в ПРАВЫЙ бок. Движение задним ходом прямо.
+
 
 		PORTB |= 1<<IN1;
 		PORTD |= (0<<IN2|1<<IN3|0<<IN4);
