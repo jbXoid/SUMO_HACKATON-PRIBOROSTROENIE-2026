@@ -1,11 +1,11 @@
 #include "main.h"
 
-void DC_motors (Action action, uint8_t speed_l, uint8_t speed_r)
+void DC_Motors (Action action, uint8_t speed)
 {
 cli();
     
-    OCR1A = speed_l;
-    OCR1B = speed_r;
+    OCR1A = speed;
+    OCR1B = speed;
 
 	switch(action) {
 
@@ -83,6 +83,8 @@ cli();
 
     }
 
+    OCR1A = speed;
+    OCR1B = speed;
 sei();	
 }
 //В рамках организации программы через автоматы FSM не представляется возможным создать функцию DC_Motors с возможностью паузы на момент реверса.

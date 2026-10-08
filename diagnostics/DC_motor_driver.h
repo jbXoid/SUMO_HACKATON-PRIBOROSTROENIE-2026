@@ -14,4 +14,4 @@ typedef enum {
     FORWARD, BACK, LEFT, RIGHT, STOP, TORNADO_LEFT, TORNADO_RIGHT
 } Action;
 
-extern void DC_motors(Action action, uint8_t speed_l, uint8_t speed_r);
+extern void DC_Motors (Action action, uint8_t Speed);

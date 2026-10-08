@@ -24,6 +24,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+
+
 #include "messages.h"
 
 #include "Timer0.h"
@@ -40,5 +42,7 @@
 // REMADE: Don't need EEPROM
 // #include "EEPROM.h"
 #include "USART.h"
+
+#include "DC_motor_driver.h"
 
 #endif //_TEST_H

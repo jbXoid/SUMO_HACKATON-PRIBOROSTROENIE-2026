@@ -48,12 +48,9 @@ cli();
 
 	case 1: //Выход на цель
 //Продумать алгоритм действий на случай продолжения атаки более 30с
-		PORTB &= ~(1<<IN1);
-		PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-		PORTD |= (1<<IN2|0<<IN3|1<<IN4);
+        
+        DC_motors(FORWARD, SPEED_F, SPEED_F);
 
-		OCR1A = SPEED_F;
-		OCR1B = SPEED_F; //регистр ШИМ на левый двигатель
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 		if ((ADCH_L >= K_FRONT_DIST) || (ADCH_R >= K_FRONT_DIST)) //Цель на КОВШЕ
@@ -108,12 +105,7 @@ cli();
 
 	case 2: //Левый поворот к цели
 
-		PORTB &= ~(1<<IN1);
-		PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-		PORTD |= (1<<IN2|0<<IN3|1<<IN4);
-
-		OCR1A = SPEED_F;
-		OCR1B = SPEED_F - FORWARD_L; //регистр ШИМ на левый двигатель
+        DC_motors(LEFT, SPEED_F - FORWARD_L, SPEED_F);        
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 
@@ -162,8 +154,8 @@ cli();
 
 		if(PIN_C < 3)//Контроль края ринга
 		{
-			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
+            
+            DC_motors(STOP,0,0);
 
 			Stop_GTimer(Motion_Timer);
 			Stop_GTimer(RRLL_Timer);
@@ -174,12 +166,7 @@ cli();
 
 	case 3:	//Правый поворот к цели
 
-		PORTB &= ~(1<<IN1);
-		PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-		PORTD |= (1<<IN2|0<<IN3|1<<IN4);
-
-		OCR1A=SPEED_F-FORWARD_R;
-		OCR1B=SPEED_F; //регистр ШИМ на левый двигатель
+        DC_motors(RIGHT, SPEED_F, SPEED_F-FORWARD_R);
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 
@@ -227,8 +214,8 @@ cli();
 
 		if(PIN_C<3)//Контроль края ринга
 			{
-			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
+                
+            DC_motors(STOP,0,0);
 
 			Stop_GTimer(Motion_Timer);
 			Stop_GTimer(RRLL_Timer);
@@ -238,12 +225,8 @@ cli();
 	break;
 
 	case 4: //Цель находится СИЛЬНО СЛЕВА. Резкий доворот к цели.
-			PORTB &= ~(1<<IN1);
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-			PORTD |= (1<<IN2|1<<IN3|0<<IN4);	//Левое вращение вокруг центра масс
-
-			OCR1A=SPEED_GO_ROTATION;
-			OCR1B=SPEED_GO_ROTATION; //регистр ШИМ на левый двигатель
+            
+        DC_motors(TORNADO_LEFT, SPEED_GO_ROTATION, SPEED_GO_ROTATION);
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 		if(ADCH_LL >= K_RR_LL)
@@ -267,21 +250,15 @@ cli();
 
 		if(PIN_C<3)//Контроль края ринга
 		{
-			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-
+            
 			fsm_Go_state=6;
 		}		
 
 	break;
 
 	case 5: //Цель находится СИЛЬНО СПРАВА. Резкий доворот к цели.
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-			PORTB |= 1<<IN1;					//Правое вращение вокруг центра масс
-			PORTD |= (0<<IN2|0<<IN3|1<<IN4);
-
-			OCR1A=SPEED_GO_ROTATION;
-			OCR1B=SPEED_GO_ROTATION; //регистр ШИМ на левый двигатель
+            
+        DC_motors(TORNADO_RIGHT, SPEED_GO_ROTATION, SPEED_GO_ROTATION);
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 		if(ADCH_RR>=K_RR_LL)
@@ -347,11 +324,8 @@ cli();
 					Start_GTimer (Motion_Timer);			//Делаем задержку для плавной остановки двигателей
 					if(Get_GTimer(Motion_Timer)>T_REVERS)	//и дальнейшего их пуска
 						{
-						PORTB |= 1<<IN1;
-						PORTD |= (0<<IN2|1<<IN3|0<<IN4);
-
-						OCR1A=SPEED_B1;
-						OCR1B=SPEED_B1;	//регистр ШИМ на левый двигатель
+                        
+                        DC_motors(BACK,SPEED_B1,SPEED_B1);
 
 						Stop_GTimer(Motion_Timer);	
 						}	
@@ -370,8 +344,8 @@ cli();
 
 		else if ((Get_GTimer(Go_Timer) > T_B) && (PIN_C < 3)) 
 			{
-			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
+            
+            DC_motors(STOP,0,0);
 
 			fsm_Go_state = 0;
 			Stop_GTimer(Go_Timer);
@@ -383,21 +357,15 @@ cli();
 	break;
 
 	case 7: //Боевой контакт
-
-			PORTB &= ~(1<<IN1);
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-			PORTD |= (1<<IN2|0<<IN3|1<<IN4);
-
-			OCR1A=SPEED_FAST;
-			OCR1B=SPEED_FAST; //регистр ШИМ на левый двигатель
+            DC_motors(FORWARD, SPEED_FAST, SPEED_FAST);
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 			
 			if ((ADCH_L<K_ADCH_L) && (ADCH_R<K_ADCH_R)) //Потеря цели по фронту
 				{
-				PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-				PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
-
+                
+                    DC_motors(STOP,0,0);
+                    
 				LED_OFF;
 				fsm_Go_state=0;
 				SendMessage(MSG_TORNADO_R);
@@ -405,8 +373,9 @@ cli();
 
 			else if((PIN_C<3) && (ADCH_L<K_FRONT_DIST) && (ADCH_R<K_FRONT_DIST))//Контроль края ринга
 			{
-			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
-			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);
+            
+                DC_motors(STOP,0,0);
+
 
 			LED_OFF;
 			fsm_Go_state=6;
