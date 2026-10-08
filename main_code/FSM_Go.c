@@ -361,7 +361,17 @@ cli();
 
 		//----------------Проверка событий-------------------------------------------------------------------------
 			
-			if ((ADCH_L<K_ADCH_L) && (ADCH_R<K_ADCH_R)) //Потеря цели по фронту
+        
+			if(PIN_C<3)//Контроль края ринга
+			{
+            
+                DC_motors(STOP,0,0);
+
+
+			LED_OFF;
+			fsm_Go_state=6;
+			}
+            else if ((ADCH_L<K_ADCH_L) && (ADCH_R<K_ADCH_R)) //Потеря цели по фронту
 				{
                 
                     DC_motors(STOP,0,0);
@@ -371,15 +381,7 @@ cli();
 				SendMessage(MSG_TORNADO_R);
 				}
 
-			else if(PIN_C<3)//Контроль края ринга
-			{
-            
-                DC_motors(STOP,0,0);
 
-
-			LED_OFF;
-			fsm_Go_state=6;
-			}
 	break;
 	}	
 

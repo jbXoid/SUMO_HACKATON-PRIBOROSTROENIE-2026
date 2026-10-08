@@ -107,7 +107,7 @@ switch (fsm_TORNADO_state)
 				SendMessage(MSG_Go_L);
 				}
 	
-		if((PIN_C<3)&&(fsm_TORNADO_state|=0)) //Контроль края ринга
+		if(PIN_C<3) //Контроль края ринга
 			{
 			PORTB &= ~(1<<IN1); 				//Делаем STOP на оба двигателя
 			PORTD &= ~(1<<IN2|1<<IN3|1<<IN4);

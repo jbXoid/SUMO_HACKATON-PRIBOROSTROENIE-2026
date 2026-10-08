@@ -14,6 +14,9 @@ int main (void)
     Init_GTimer();
     init_timer1();
 
+    Init_SHARP_ADC();
+    sei();
+
     Mode diag_mode = NONE;
 
     const char begin_text[] = "DIAGNOSTICS. PRESS A TO SWITCH THROUGH MODES: SHARP_TEST, MOTOR_TEST, LINE_SENSOR\r\n";
@@ -41,6 +44,20 @@ int main (void)
                     );
 
             send_text_uart( (unsigned char *)press_text, (uint16_t)len );
+
+
+            PORTB &= ~(1<<0);
+            PORTD &= ~(1<<7);
+
+            PORTD &= ~(1<<4);
+            PORTD &= ~(1<<6);
+            
+            OCR1A = 0;
+            OCR1B = 0;
+
+            break;
+
+
 
             Start_GTimer(10);
 
@@ -86,13 +103,13 @@ int main (void)
 
             case MOTOR_TEST:
                 
-                if (Get_GTimer(10) >= 5 ) {
+                if (Get_GTimer(10) >= 10 ) {
 
 
 
                     if( motor_speed_rising ) {
 
-                        if ( OCR1A == 150 && OCR1B == 150) {
+                        if ( OCR1A == 100 && OCR1B == 100) {
                             
                             motor_speed_rising = 0;
 
@@ -172,8 +189,8 @@ int main (void)
                             "FIRST SENSOR: %d\r\n"
                             "SECOND SENSOR: %d\r\n"
                             "\r\n",
-                            PINC & _BV(PC0) != 0,
-                            PINC & _BV(PC1) != 0
+                            (PINC & _BV(PC0)) != 0,
+                            (PINC & _BV(PC1)) != 0
                             );
 
                     if (len > 0 && (size_t)len < sizeof debug_text) {
