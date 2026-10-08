@@ -4,8 +4,8 @@ void DC_motors (Action action, uint8_t speed_l, uint8_t speed_r)
 {
 cli();
     
-    OCR1A = speed_l;
-    OCR1B = speed_r;
+    OCR1A = speed_r;
+    OCR1B = speed_l;
 
 	switch(action) {
 

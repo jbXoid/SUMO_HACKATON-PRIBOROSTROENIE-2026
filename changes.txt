@@ -32,3 +32,12 @@ FIRST FLASHED
 
 2.2.3. Made line sensors diagnostics
 
+2.3. DC MOTOR DRIVER
+
+2.3.1. Have done driver
+
+2.3.2. Changed every motor controlling to driver functoin
+
+2.4. FIXING LOGIC
+
+2.4.1 Fixed edge checking while attacking

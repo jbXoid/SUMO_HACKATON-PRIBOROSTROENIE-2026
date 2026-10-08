@@ -86,7 +86,7 @@ int main (void)
 
             case MOTOR_TEST:
                 
-                if (Get_GTimer(10) >= 2 ) {
+                if (Get_GTimer(10) >= 5 ) {
 
 
 
@@ -172,8 +172,8 @@ int main (void)
                             "FIRST SENSOR: %d\r\n"
                             "SECOND SENSOR: %d\r\n"
                             "\r\n",
-                            (PINC & (PINC & _BV(PC0)) != 0),
-                            (PINC & (PINC & _BV(PC1)) != 0)
+                            PINC & _BV(PC0) != 0,
+                            PINC & _BV(PC1) != 0
                             );
 
                     if (len > 0 && (size_t)len < sizeof debug_text) {

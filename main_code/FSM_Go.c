@@ -371,7 +371,7 @@ cli();
 				SendMessage(MSG_TORNADO_R);
 				}
 
-			else if((PIN_C<3) && (ADCH_L<K_FRONT_DIST) && (ADCH_R<K_FRONT_DIST))//Контроль края ринга
+			else if(PIN_C<3)//Контроль края ринга
 			{
             
                 DC_motors(STOP,0,0);
